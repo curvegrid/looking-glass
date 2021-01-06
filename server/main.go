@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Curvegrid Inc.
+// Copyright (c) 2021 Curvegrid Inc.
 
 package main
 
@@ -7,10 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"sync"
-	"time"
 
-	"github.com/curvegrid/gofig"
+	"github.com/curvegrid/looking-glass/server/watcher"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -86,32 +84,32 @@ func GetEvents(endpoint string, token string) []EventTransaction {
 }
 
 func main() {
-	// parse config
-	cfg := Config{}
-	gofig.SetEnvPrefix("LG")
-	gofig.SetConfigFileFlag("c", "config file")
-	gofig.AddConfigFile("looking-glass") // gofig will try to load default.json, default.toml and default.yaml
-	gofig.Parse(&cfg)
+	// // parse config
+	// cfg := Config{}
+	// gofig.SetEnvPrefix("LG")
+	// gofig.SetConfigFileFlag("c", "config file")
+	// gofig.AddConfigFile("looking-glass") // gofig will try to load default.json, default.toml and default.yaml
+	// gofig.Parse(&cfg)
 
-	blockchains := []Blockchain{cfg.A, cfg.B}
+	// blockchains := []Blockchain{cfg.A, cfg.B}
 
-	wg := sync.WaitGroup{}
+	// wg := sync.WaitGroup{}
 
-	for _, blockchain := range blockchains {
-		wg.Add(1)
-		go func(b Blockchain) {
-			// store last event
+	// for _, blockchain := range blockchains {
+	// 	wg.Add(1)
+	// 	go func(b Blockchain) {
+	// 		// store last event
 
-			// poll for events
-			GetEvents(b.Endpoint, b.Token)
+	// 		// poll for events
+	// 		GetEvents(b.Endpoint, b.Token)
 
-			// pause
-			time.Sleep(time.Second * 5)
+	// 		// pause
+	// 		time.Sleep(time.Second * 5)
 
-		}(blockchain)
-	}
+	// 	}(blockchain)
+	// }
 
-	wg.Wait()
+	// wg.Wait()
 
 	// poll for transactions on A and B
 	// todo: listen for transactions via websockets
@@ -121,4 +119,5 @@ func main() {
 	// burn on one side
 
 	// mint on the other
+	watcher.Watch()
 }
