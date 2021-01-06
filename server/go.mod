@@ -1,4 +1,4 @@
-module github.com/curvegrid/looking-glass
+module github.com/curvegrid/server/looking-glass
 
 go 1.15
 
