@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Curvegrid Inc.
 
-package event
+package blockchain
 
 import (
 	"time"
