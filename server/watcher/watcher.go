@@ -48,7 +48,7 @@ func (w *Watcher) Watch() chan struct{} {
 				logger.Fatalf("Cannot read websocket message:", err.Error())
 				return
 			}
-			d := getDepositData(&e)
+			d := w.getDepositData(&e)
 			if d != nil {
 				logger.Printf("%+v", *d)
 			}
