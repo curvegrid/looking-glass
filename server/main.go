@@ -3,7 +3,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net/url"
 
 	"github.com/curvegrid/gofig"
@@ -27,7 +27,11 @@ type Config struct {
 func getEventStreamURL(bc *Blockchain) *url.URL {
 	params := url.Values{}
 	params.Add("token", bc.BearerToken)
-	u := url.URL{Scheme: "ws", Host: bc.MbEndpoint, Path: "api/v0/chains/ethereum/addresses/autotoken/events/stream"}
+	u := url.URL{
+		Scheme: "ws",
+		Host:   bc.MbEndpoint,
+		Path:   fmt.Sprintf("api/v0/chains/ethereum/addresses/%s/events/stream", bc.BridgeAddress.String()),
+	}
 	u.RawQuery = params.Encode()
 	return &u
 }
@@ -37,10 +41,11 @@ func main() {
 	cfg := Config{}
 	gofig.SetEnvPrefix("LG")
 	gofig.SetConfigFileFlag("c", "config file")
-	gofig.AddConfigFile("looking-glass") // gofig will try to load default.json, default.toml and default.yaml
+	gofig.AddConfigFile("looking-glass") // gofig will try to load looking-glass.json, looking-glass.toml and looking-glass.yaml
 	gofig.Parse(&cfg)
 
-	log.Printf("%+v", cfg)
-
-	watcher.Watch(getEventStreamURL(&cfg.A))
+	doneA := watcher.Watch(getEventStreamURL(&cfg.A))
+	doneB := watcher.Watch(getEventStreamURL(&cfg.B))
+	<-doneA
+	<-doneB
 }

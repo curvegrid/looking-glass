@@ -9,13 +9,13 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-func Watch(u *url.URL) {
+func Watch(u *url.URL) chan struct{} {
 	logger.Infof("Connect to %s", u.String())
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		logger.Fatalf("Cannot connect to websocket dial:", err.Error())
-		return
+		return nil
 	}
 
 	done := make(chan struct{})
@@ -31,5 +31,5 @@ func Watch(u *url.URL) {
 		}
 	}()
 
-	<-done
+	return done
 }
