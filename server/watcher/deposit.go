@@ -1,9 +1,10 @@
+// Copyright (c) 2021 Curvegrid Inc.
+
 package watcher
 
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/curvegrid/looking-glass/server/blockchain"
 	"github.com/curvegrid/looking-glass/server/mbAPI"
@@ -89,6 +90,5 @@ func (w *Watcher) getDepositData(e *blockchain.JSONEvent) *DepositData {
 	if err := json.Unmarshal(data.Ouput[5], &d.Amount); err != nil {
 		panic(err)
 	}
-	log.Printf("%+v", d)
 	return &d
 }
