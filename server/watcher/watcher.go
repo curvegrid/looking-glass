@@ -9,8 +9,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-func Watch() {
-	u := url.URL{Scheme: "ws", Host: "localhost:8080", Path: "api/v0/chains/ethereum/addresses/bridge/events/stream"}
+func Watch(u *url.URL) {
 	logger.Infof("Connect to %s", u.String())
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
@@ -28,7 +27,7 @@ func Watch() {
 				logger.Fatalf("Cannot read websocket message:", err.Error())
 				return
 			}
-			logger.Println(message)
+			logger.Println(string(message))
 		}
 	}()
 
