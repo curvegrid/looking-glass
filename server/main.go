@@ -46,6 +46,13 @@ func main() {
 
 	doneA := watcher.Watch(getEventStreamURL(&cfg.A))
 	doneB := watcher.Watch(getEventStreamURL(&cfg.B))
-	<-doneA
-	<-doneB
+doneLoop:
+	for {
+		select {
+		case <-doneA:
+			break doneLoop
+		case <-doneB:
+			break doneLoop
+		}
+	}
 }

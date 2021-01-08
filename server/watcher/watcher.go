@@ -5,6 +5,7 @@ package watcher
 import (
 	"net/url"
 
+	"github.com/curvegrid/looking-glass/server/event"
 	"github.com/gorilla/websocket"
 	logger "github.com/sirupsen/logrus"
 )
@@ -22,12 +23,13 @@ func Watch(u *url.URL) chan struct{} {
 	go func() {
 		defer close(done)
 		for {
-			_, message, err := c.ReadMessage()
+			var e event.JSONEvent
+			c.ReadJSON(&e)
 			if err != nil {
 				logger.Fatalf("Cannot read websocket message:", err.Error())
 				return
 			}
-			logger.Println(string(message))
+			logger.Printf("%+v", e)
 		}
 	}()
 
