@@ -30,14 +30,19 @@ func (w *Watcher) getEventStreamURL(bc *blockchain.Blockchain) *url.URL {
 
 func (w *Watcher) handleDepositEvent(e *blockchain.JSONEvent, bc *blockchain.Blockchain) {
 	d := getDeposit(e, bc)
+	d.OriginChainID = w.ChainID
 	logger.Infof("Got a Deposit event from chain %d: %+v", w.ChainID, *d)
 
 	err := voteProposal(d)
-	logger.Infof("HSM: vote a proposal that initiates a transfer from chain %d to chain %d", w.ChainID, d.DestinationChainID)
+	logger.Infof("HSM: vote yes to a transfer proposal originated from the deposit %+v", *d)
 	if err != nil {
 		logger.Error(err)
 	}
 
+	// for simplified version with only one relayer for each bridge contract,
+	// we execute the proposal right after voting
+	executeProposal(d)
+	logger.Infof("HSM: execute the a transfer proposal originated from the deposit %+v", *d)
 }
 
 func (w *Watcher) Watch() chan struct{} {
@@ -67,9 +72,7 @@ func (w *Watcher) Watch() chan struct{} {
 			}
 			switch e.Event.Name {
 			case "Deposit":
-				{
-					w.handleDepositEvent(&e, bc)
-				}
+				w.handleDepositEvent(&e, bc)
 			}
 		}
 	}()

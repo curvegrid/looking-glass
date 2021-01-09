@@ -14,6 +14,7 @@ import (
 )
 
 type Deposit struct {
+	OriginChainID      int
 	DestinationChainID int
 	DepositNonce       int64
 	ResourceID         common.Hash
@@ -75,7 +76,7 @@ func getDepositFee(bc *blockchain.Blockchain) *mbAPI.Number {
 func getDepositData(d *Deposit) []byte {
 	var data []byte
 	data = append(data, common.LeftPadBytes(d.Amount.Bytes(), 32)...)
-	data = append(data, common.LeftPadBytes([]byte("14"), 32)...) // 14 denotes 20 in hex (length of an address)
+	data = append(data, common.LeftPadBytes([]byte{20}, 32)...)
 	data = append(data, d.Recipient.Bytes()...)
 	return data
 }
