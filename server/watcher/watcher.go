@@ -28,6 +28,18 @@ func (w *Watcher) getEventStreamURL(bc *blockchain.Blockchain) *url.URL {
 	return &u
 }
 
+func (w *Watcher) handleDepositEvent(e *blockchain.JSONEvent, bc *blockchain.Blockchain) {
+	d := getDeposit(e, bc)
+	logger.Infof("Got a Deposit event from chain %d: %+v", w.ChainID, *d)
+
+	err := voteProposal(d)
+	logger.Infof("HSM: vote a proposal that initiates a transfer from chain %d to chain %d", w.ChainID, d.DestinationChainID)
+	if err != nil {
+		logger.Error(err)
+	}
+
+}
+
 func (w *Watcher) Watch() chan struct{} {
 	bc, err := blockchain.GetBlockChainFromID(w.ChainID)
 	if err != nil {
@@ -53,16 +65,10 @@ func (w *Watcher) Watch() chan struct{} {
 				logger.Fatalf("Cannot read websocket message:", err.Error())
 				return
 			}
-			d := w.getDepositData(&e, bc)
-			if d != nil {
-				logger.Infof("Got a Deposit event from chain %d: %+v", w.ChainID, *d)
-			}
-			if d.DestinationChainID != w.ChainID {
-				// create a cross-chain transfer from w.ChainID to d.DestinationChainID
-				logger.Infof("Create a cross-chain transfer from %d to %d", w.ChainID, d.DestinationChainID)
-				err := CreateDeposit(d)
-				if err != nil {
-					logger.Error(err)
+			switch e.Event.Name {
+			case "Deposit":
+				{
+					w.handleDepositEvent(&e, bc)
 				}
 			}
 		}

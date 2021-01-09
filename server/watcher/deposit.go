@@ -5,6 +5,7 @@ package watcher
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/curvegrid/looking-glass/server/blockchain"
 	"github.com/curvegrid/looking-glass/server/mbAPI"
@@ -12,8 +13,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type DepositData struct {
+type Deposit struct {
 	DestinationChainID int
+	DepositNonce       int64
 	ResourceID         common.Hash
 	Amount             mbAPI.Number
 	Recipient          sqltypes.Address
@@ -21,7 +23,7 @@ type DepositData struct {
 }
 
 // getHandlerAddress gets the handler address from the resourceID recevied from Deposit event
-func (w *Watcher) getHandlerAddress(resourceID string, bc *blockchain.Blockchain) *sqltypes.Address {
+func getHandlerAddress(resourceID string, bc *blockchain.Blockchain) *sqltypes.Address {
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/_resourceIDToHandlerAddress",
 		bc.MbEndpoint, bc.BridgeAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
@@ -70,47 +72,16 @@ func getDepositFee(bc *blockchain.Blockchain) *mbAPI.Number {
 	return &data.Ouput
 }
 
-func getDepositDataHash(d *DepositData) string {
-	return "0x" + fmt.Sprintf("%064x", d.Amount) + fmt.Sprintf("%064x", 20) + d.Recipient.String()[2:]
+func getDepositData(d *Deposit) []byte {
+	var data []byte
+	data = append(data, common.LeftPadBytes(d.Amount.Bytes(), 32)...)
+	data = append(data, common.LeftPadBytes([]byte("14"), 32)...) // 14 denotes 20 in hex (length of an address)
+	data = append(data, d.Recipient.Bytes()...)
+	return data
 }
 
-func CreateDeposit(d *DepositData) error {
-	bc, err := blockchain.GetBlockChainFromID(d.DestinationChainID)
-	if err != nil {
-
-	}
-	fee := getDepositFee(bc)
-	dataHash := getDepositDataHash(d)
-
-	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/deposit",
-		bc.MbEndpoint, bc.BridgeAddress.String())
-	payload := mbAPI.JSONPOSTMethodArgs{
-		Args: []json.RawMessage{
-			json.RawMessage(`"` + fmt.Sprintf("%d", d.DestinationChainID) + `"`),
-			json.RawMessage(`"` + d.ResourceID.String() + `"`),
-			json.RawMessage(`"` + dataHash + `"`),
-		},
-		TransactionArgs: mbAPI.TransactionArgs{
-			From:          &bc.HSMAddress,
-			Value:         fee,
-			SignAndSubmit: true,
-		},
-	}
-	result, err := mbAPI.Post(endpoint, bc.BearerToken, payload)
-	if err != nil {
-		panic(err)
-	}
-	if result.Status != 200 {
-		panic(result.Message)
-	}
-	return nil
-}
-
-// getDepositData gets DepositData from a Deposit event emitted by the Bridge contract
-func (w *Watcher) getDepositData(e *blockchain.JSONEvent, bc *blockchain.Blockchain) *DepositData {
-	if e.Event.Name != "Deposit" {
-		return nil
-	}
+// getDeposit creates a Deposit struct from a Deposit event emitted by the Bridge contract
+func getDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) *Deposit {
 	// event received from the Bridge contract only stores
 	// resource ID of the token handler contract,
 	// destination chain ID and the deposit nonce.
@@ -118,7 +89,7 @@ func (w *Watcher) getDepositData(e *blockchain.JSONEvent, bc *blockchain.Blockch
 	resourceID := fmt.Sprintf("%v", e.Event.Inputs[1].Value)
 	depositNonce := fmt.Sprintf("%v", e.Event.Inputs[2].Value)
 	// we need to use resourceID to find the token handler contract's address
-	handlerAddress := w.getHandlerAddress(resourceID, bc)
+	handlerAddress := getHandlerAddress(resourceID, bc)
 
 	// get the deposit data by calling depositRecords method of the handler contract
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/erc20handler/methods/_depositRecords",
@@ -143,7 +114,11 @@ func (w *Watcher) getDepositData(e *blockchain.JSONEvent, bc *blockchain.Blockch
 		panic(err)
 	}
 
-	var d DepositData
+	// parse DepositData from known variables
+	var d Deposit
+	if d.DepositNonce, err = strconv.ParseInt(depositNonce, 10, 64); err != nil {
+		panic(err)
+	}
 	if err := json.Unmarshal(data.Ouput[0], &d.TokenAddress); err != nil {
 		panic(err)
 	}
