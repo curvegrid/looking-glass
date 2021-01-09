@@ -12,24 +12,29 @@ import (
 )
 
 type Watcher struct {
-	Blockchain *blockchain.Blockchain
+	ChainID int
 }
 
-func (w *Watcher) getEventStreamURL() *url.URL {
+func (w *Watcher) getEventStreamURL(bc *blockchain.Blockchain) *url.URL {
 	params := url.Values{}
-	params.Add("token", w.Blockchain.BearerToken)
+	params.Add("token", bc.BearerToken)
 	u := url.URL{
 		Scheme: "ws",
-		Host:   w.Blockchain.MbEndpoint,
+		Host:   bc.MbEndpoint,
 		Path: fmt.Sprintf("api/v0/chains/ethereum/addresses/%s/events/stream",
-			w.Blockchain.BridgeAddress.String()),
+			bc.BridgeAddress.String()),
 	}
 	u.RawQuery = params.Encode()
 	return &u
 }
 
 func (w *Watcher) Watch() chan struct{} {
-	u := w.getEventStreamURL()
+	bc, err := blockchain.GetBlockChainFromID(w.ChainID)
+	if err != nil {
+		panic(err)
+	}
+
+	u := w.getEventStreamURL(bc)
 	logger.Infof("Connect to %s", u.String())
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
@@ -48,7 +53,7 @@ func (w *Watcher) Watch() chan struct{} {
 				logger.Fatalf("Cannot read websocket message:", err.Error())
 				return
 			}
-			d := w.getDepositData(&e)
+			d := w.getDepositData(&e, bc)
 			if d != nil {
 				logger.Printf("%+v", *d)
 			}

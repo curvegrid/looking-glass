@@ -18,16 +18,16 @@ type DepositData struct {
 }
 
 // getHandlerAddress gets the handler address from the resourceID recevied from Deposit event
-func (w *Watcher) getHandlerAddress(resourceID string) *common.Address {
+func (w *Watcher) getHandlerAddress(resourceID string, bc *blockchain.Blockchain) *common.Address {
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/_resourceIDToHandlerAddress",
-		w.Blockchain.MbEndpoint, w.Blockchain.BridgeAddress.String())
+		bc.MbEndpoint, bc.BridgeAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
 		Args: []json.RawMessage{json.RawMessage(`"` + resourceID + `"`)},
 		TransactionArgs: mbAPI.TransactionArgs{
-			From: &w.Blockchain.HSMAddress,
+			From: &bc.HSMAddress,
 		},
 	}
-	result, err := mbAPI.Post(endpoint, w.Blockchain.BearerToken, payload)
+	result, err := mbAPI.Post(endpoint, bc.BearerToken, payload)
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +44,7 @@ func (w *Watcher) getHandlerAddress(resourceID string) *common.Address {
 }
 
 // getDepositData gets DepositData from a Deposit event emitted by the Bridge contract
-func (w *Watcher) getDepositData(e *blockchain.JSONEvent) *DepositData {
+func (w *Watcher) getDepositData(e *blockchain.JSONEvent, bc *blockchain.Blockchain) *DepositData {
 	if e.Event.Name != "Deposit" {
 		return nil
 	}
@@ -55,18 +55,18 @@ func (w *Watcher) getDepositData(e *blockchain.JSONEvent) *DepositData {
 	resourceID := fmt.Sprintf("%v", e.Event.Inputs[1].Value)
 	depositNonce := fmt.Sprintf("%v", e.Event.Inputs[2].Value)
 	// we need to use resourceID to find the token handler contract's address
-	handlerAddress := w.getHandlerAddress(resourceID)
+	handlerAddress := w.getHandlerAddress(resourceID, bc)
 
 	// get the deposit data by calling depositRecords method of the handler contract
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/erc20handler/methods/_depositRecords",
-		w.Blockchain.MbEndpoint, handlerAddress.String())
+		bc.MbEndpoint, handlerAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
 		Args: []json.RawMessage{json.RawMessage(chainID), json.RawMessage(depositNonce)},
 		TransactionArgs: mbAPI.TransactionArgs{
-			From: &w.Blockchain.HSMAddress,
+			From: &bc.HSMAddress,
 		},
 	}
-	result, err := mbAPI.Post(endpoint, w.Blockchain.BearerToken, payload)
+	result, err := mbAPI.Post(endpoint, bc.BearerToken, payload)
 	if err != nil {
 		panic(err)
 	}
