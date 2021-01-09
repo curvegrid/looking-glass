@@ -17,7 +17,7 @@ type Deposit struct {
 	OriginChainID      int
 	DestinationChainID int
 	DepositNonce       int64
-	ResourceID         common.Hash
+	ResourceID         string
 	Amount             mbAPI.Number
 	Recipient          sqltypes.Address
 	TokenAddress       sqltypes.Address

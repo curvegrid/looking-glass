@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/curvegrid/looking-glass/server/blockchain"
 	"github.com/curvegrid/looking-glass/server/mbAPI"
@@ -14,7 +13,6 @@ import (
 )
 
 func getProposalDataHash(d *Deposit, handlerAddress *sqltypes.Address) common.Hash {
-	log.Printf("data: %s", hex.EncodeToString(append(handlerAddress.Bytes(), getDepositData(d)...)))
 	return crypto.Keccak256Hash(append(handlerAddress.Bytes(), getDepositData(d)...))
 }
 
@@ -30,16 +28,13 @@ func executeProposal(d *Deposit) error {
 			json.RawMessage(`"` + fmt.Sprintf("%d", d.OriginChainID) + `"`),
 			json.RawMessage(`"` + fmt.Sprintf("%d", d.DepositNonce) + `"`),
 			json.RawMessage(`"0x` + hex.EncodeToString(getDepositData(d)) + `"`),
-			json.RawMessage(`"` + d.ResourceID.String() + `"`),
+			json.RawMessage(`"` + d.ResourceID + `"`),
 		},
 		TransactionArgs: mbAPI.TransactionArgs{
 			From:          &bc.HSMAddress,
 			SignAndSubmit: true,
 		},
 	}
-
-	b, _ := json.Marshal(payload)
-	log.Printf("payload: %s", string(b))
 
 	result, err := mbAPI.Post(endpoint, bc.BearerToken, payload)
 	if err != nil {
@@ -56,7 +51,7 @@ func voteProposal(d *Deposit) error {
 	if err != nil {
 		return err
 	}
-	handlerAddress := getHandlerAddress(d.ResourceID.String(), bc)
+	handlerAddress := getHandlerAddress(d.ResourceID, bc)
 	dataHash := getProposalDataHash(d, handlerAddress)
 
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/voteProposal",
@@ -65,7 +60,7 @@ func voteProposal(d *Deposit) error {
 		Args: []json.RawMessage{
 			json.RawMessage(`"` + fmt.Sprintf("%d", d.OriginChainID) + `"`),
 			json.RawMessage(`"` + fmt.Sprintf("%d", d.DepositNonce) + `"`),
-			json.RawMessage(`"` + d.ResourceID.String() + `"`),
+			json.RawMessage(`"` + d.ResourceID + `"`),
 			json.RawMessage(`"` + dataHash.String() + `"`),
 		},
 		TransactionArgs: mbAPI.TransactionArgs{
