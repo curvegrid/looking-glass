@@ -55,7 +55,15 @@ func (w *Watcher) Watch() chan struct{} {
 			}
 			d := w.getDepositData(&e, bc)
 			if d != nil {
-				logger.Printf("%+v", *d)
+				logger.Infof("Got a Deposit event from chain %d: %+v", w.ChainID, *d)
+			}
+			if d.DestinationChainID != w.ChainID {
+				// create a cross-chain transfer from w.ChainID to d.DestinationChainID
+				logger.Infof("Create a cross-chain transfer from %d to %d", w.ChainID, d.DestinationChainID)
+				err := CreateDeposit(d)
+				if err != nil {
+					logger.Error(err)
+				}
 			}
 		}
 	}()

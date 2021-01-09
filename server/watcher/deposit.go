@@ -9,12 +9,15 @@ import (
 	"github.com/curvegrid/looking-glass/server/blockchain"
 	"github.com/curvegrid/looking-glass/server/mbAPI"
 	"github.com/curvegrid/multibaas/server/app/sqltypes"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type DepositData struct {
-	Amount       mbAPI.Number
-	Recipient    sqltypes.Address
-	TokenAddress sqltypes.Address
+	DestinationChainID int
+	ResourceID         common.Hash
+	Amount             mbAPI.Number
+	Recipient          sqltypes.Address
+	TokenAddress       sqltypes.Address
 }
 
 // getHandlerAddress gets the handler address from the resourceID recevied from Deposit event
@@ -41,6 +44,66 @@ func (w *Watcher) getHandlerAddress(resourceID string, bc *blockchain.Blockchain
 		panic(err)
 	}
 	return &data.Ouput
+}
+
+func getDepositFee(bc *blockchain.Blockchain) *mbAPI.Number {
+	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/_fee",
+		bc.MbEndpoint, bc.BridgeAddress.String())
+	payload := mbAPI.JSONPOSTMethodArgs{
+		TransactionArgs: mbAPI.TransactionArgs{
+			From: &bc.HSMAddress,
+		},
+	}
+	result, err := mbAPI.Post(endpoint, bc.BearerToken, payload)
+	if err != nil {
+		panic(err)
+	}
+	if result.Status != 200 {
+		panic(result.Message)
+	}
+	var data struct {
+		Ouput mbAPI.Number `json:"output"`
+	}
+	if err := json.Unmarshal(result.Result, &data); err != nil {
+		panic(err)
+	}
+	return &data.Ouput
+}
+
+func getDepositDataHash(d *DepositData) string {
+	return "0x" + fmt.Sprintf("%064x", d.Amount) + fmt.Sprintf("%064x", 20) + d.Recipient.String()[2:]
+}
+
+func CreateDeposit(d *DepositData) error {
+	bc, err := blockchain.GetBlockChainFromID(d.DestinationChainID)
+	if err != nil {
+
+	}
+	fee := getDepositFee(bc)
+	dataHash := getDepositDataHash(d)
+
+	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/deposit",
+		bc.MbEndpoint, bc.BridgeAddress.String())
+	payload := mbAPI.JSONPOSTMethodArgs{
+		Args: []json.RawMessage{
+			json.RawMessage(`"` + fmt.Sprintf("%d", d.DestinationChainID) + `"`),
+			json.RawMessage(`"` + d.ResourceID.String() + `"`),
+			json.RawMessage(`"` + dataHash + `"`),
+		},
+		TransactionArgs: mbAPI.TransactionArgs{
+			From:          &bc.HSMAddress,
+			Value:         fee,
+			SignAndSubmit: true,
+		},
+	}
+	result, err := mbAPI.Post(endpoint, bc.BearerToken, payload)
+	if err != nil {
+		panic(err)
+	}
+	if result.Status != 200 {
+		panic(result.Message)
+	}
+	return nil
 }
 
 // getDepositData gets DepositData from a Deposit event emitted by the Bridge contract
@@ -82,6 +145,12 @@ func (w *Watcher) getDepositData(e *blockchain.JSONEvent, bc *blockchain.Blockch
 
 	var d DepositData
 	if err := json.Unmarshal(data.Ouput[0], &d.TokenAddress); err != nil {
+		panic(err)
+	}
+	if err := json.Unmarshal(data.Ouput[1], &d.DestinationChainID); err != nil {
+		panic(err)
+	}
+	if err := json.Unmarshal(data.Ouput[2], &d.ResourceID); err != nil {
 		panic(err)
 	}
 	if err := json.Unmarshal(data.Ouput[3], &d.Recipient); err != nil {

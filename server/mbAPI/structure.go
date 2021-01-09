@@ -18,7 +18,6 @@ type TransactionArgs struct {
 	Value         *Number           `json:"value,omitempty"`
 	Nonce         *Number           `json:"nonce,omitempty"`
 	SignAndSubmit bool              `json:"signAndSubmit,omitempty"`
-	Signer        *sqltypes.Address
 }
 
 type JSONPOSTMethodArgs struct {
