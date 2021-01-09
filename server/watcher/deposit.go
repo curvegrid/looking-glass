@@ -8,17 +8,17 @@ import (
 
 	"github.com/curvegrid/looking-glass/server/blockchain"
 	"github.com/curvegrid/looking-glass/server/mbAPI"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/curvegrid/multibaas/server/app/sqltypes"
 )
 
 type DepositData struct {
 	Amount       mbAPI.Number
-	Recipient    common.Address
-	TokenAddress common.Address
+	Recipient    sqltypes.Address
+	TokenAddress sqltypes.Address
 }
 
 // getHandlerAddress gets the handler address from the resourceID recevied from Deposit event
-func (w *Watcher) getHandlerAddress(resourceID string, bc *blockchain.Blockchain) *common.Address {
+func (w *Watcher) getHandlerAddress(resourceID string, bc *blockchain.Blockchain) *sqltypes.Address {
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/_resourceIDToHandlerAddress",
 		bc.MbEndpoint, bc.BridgeAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
@@ -35,7 +35,7 @@ func (w *Watcher) getHandlerAddress(resourceID string, bc *blockchain.Blockchain
 		panic(result.Message)
 	}
 	var data struct {
-		Ouput common.Address `json:"output"`
+		Ouput sqltypes.Address `json:"output"`
 	}
 	if err := json.Unmarshal(result.Result, &data); err != nil {
 		panic(err)

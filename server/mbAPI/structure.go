@@ -7,18 +7,18 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/curvegrid/multibaas/server/app/sqltypes"
 )
 
 type TransactionArgs struct {
-	From          *common.Address `json:"from,omitempty"`
-	To            *common.Address `json:"to,omitempty"`
-	GasLimit      uint64          `json:"gasLimit,omitempty"`
-	GasPrice      *Number         `json:"gasPrice,omitempty"`
-	Value         *Number         `json:"value,omitempty"`
-	Nonce         *Number         `json:"nonce,omitempty"`
-	SignAndSubmit bool            `json:"signAndSubmit,omitempty"`
-	Signer        *common.Address
+	From          *sqltypes.Address `json:"from,omitempty"`
+	To            *sqltypes.Address `json:"to,omitempty"`
+	GasLimit      uint64            `json:"gasLimit,omitempty"`
+	GasPrice      *Number           `json:"gasPrice,omitempty"`
+	Value         *Number           `json:"value,omitempty"`
+	Nonce         *Number           `json:"nonce,omitempty"`
+	SignAndSubmit bool              `json:"signAndSubmit,omitempty"`
+	Signer        *sqltypes.Address
 }
 
 type JSONPOSTMethodArgs struct {
