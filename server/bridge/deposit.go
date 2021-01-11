@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Curvegrid Inc.
 
-package watcher
+package bridge
 
 import (
 	"encoding/json"
@@ -80,8 +80,8 @@ func getDepositData(d *Deposit) []byte {
 	return data
 }
 
-// getDeposit creates a Deposit struct from a Deposit event emitted by the Bridge contract
-func getDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) *Deposit {
+// GetDeposit creates a Deposit struct from a Deposit event emitted by the Bridge contract
+func GetDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) *Deposit {
 	// event received from the Bridge contract only stores
 	// resource ID of the token handler contract,
 	// destination chain ID and the deposit nonce.

@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/curvegrid/looking-glass/server/blockchain"
+	"github.com/curvegrid/looking-glass/server/bridge"
 	"github.com/gorilla/websocket"
 	logger "github.com/sirupsen/logrus"
 )
@@ -29,11 +30,11 @@ func (w *Watcher) getEventStreamURL(bc *blockchain.Blockchain) *url.URL {
 }
 
 func (w *Watcher) handleDepositEvent(e *blockchain.JSONEvent, bc *blockchain.Blockchain) {
-	d := getDeposit(e, bc)
+	d := bridge.GetDeposit(e, bc)
 	d.OriginChainID = w.ChainID
 	logger.Infof("Got a Deposit event from chain %d: %+v", w.ChainID, *d)
 
-	err := voteProposal(d)
+	err := bridge.VoteProposal(d)
 	logger.Infof("HSM: voted yes to a transfer proposal originated from the deposit %+v", *d)
 	if err != nil {
 		logger.Error(err)
@@ -41,7 +42,7 @@ func (w *Watcher) handleDepositEvent(e *blockchain.JSONEvent, bc *blockchain.Blo
 
 	// for simplified version with only one relayer for each bridge contract,
 	// we execute the proposal right after voting
-	executeProposal(d)
+	bridge.ExecuteProposal(d)
 	logger.Infof("HSM: executed the a transfer proposal originated from the deposit %+v", *d)
 }
 

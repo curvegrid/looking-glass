@@ -1,4 +1,6 @@
-package watcher
+// Copyright (c) 2021 Curvegrid Inc.
+
+package bridge
 
 import (
 	"encoding/hex"
@@ -15,7 +17,7 @@ func getProposalDataHash(d *Deposit, handlerAddress *blockchain.Address) common.
 	return crypto.Keccak256Hash(append(handlerAddress.Bytes(), getDepositData(d)...))
 }
 
-func executeProposal(d *Deposit) error {
+func ExecuteProposal(d *Deposit) error {
 	bc, err := blockchain.GetBlockChainFromID(d.DestinationChainID)
 	if err != nil {
 		return err
@@ -45,7 +47,7 @@ func executeProposal(d *Deposit) error {
 	return nil
 }
 
-func voteProposal(d *Deposit) error {
+func VoteProposal(d *Deposit) error {
 	bc, err := blockchain.GetBlockChainFromID(d.DestinationChainID)
 	if err != nil {
 		return err
