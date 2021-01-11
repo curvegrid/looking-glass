@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/curvegrid/looking-glass/server/blockchain"
+	"github.com/curvegrid/looking-glass/server/customError"
 	"github.com/curvegrid/looking-glass/server/mbAPI"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -39,10 +40,10 @@ func ExecuteProposal(d *Deposit) error {
 
 	result, err := mbAPI.Post(endpoint, bc.BearerToken, payload)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if result.Status != 200 {
-		panic(result.Message)
+		return customError.NewAPICallError(endpoint, result.Status, result.Message)
 	}
 	return nil
 }
@@ -52,7 +53,10 @@ func VoteProposal(d *Deposit) error {
 	if err != nil {
 		return err
 	}
-	handlerAddress := getHandlerAddress(d.ResourceID, bc)
+	handlerAddress, err := getHandlerAddress(d.ResourceID, bc)
+	if err != nil {
+		return err
+	}
 	dataHash := getProposalDataHash(d, handlerAddress)
 
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/voteProposal",
@@ -72,10 +76,10 @@ func VoteProposal(d *Deposit) error {
 
 	result, err := mbAPI.Post(endpoint, bc.BearerToken, payload)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if result.Status != 200 {
-		panic(result.Message)
+		return customError.NewAPICallError(endpoint, result.Status, result.Message)
 	}
 	return nil
 }

@@ -29,27 +29,31 @@ func (w *Watcher) getEventStreamURL(bc *blockchain.Blockchain) *url.URL {
 	return &u
 }
 
-func (w *Watcher) handleDepositEvent(e *blockchain.JSONEvent, bc *blockchain.Blockchain) {
-	d := bridge.GetDeposit(e, bc)
+func (w *Watcher) handleDepositEvent(e *blockchain.JSONEvent, bc *blockchain.Blockchain) error {
+	d, err := bridge.GetDeposit(e, bc)
+	if err != nil {
+		return err
+	}
 	d.OriginChainID = w.ChainID
 	logger.Infof("Got a Deposit event from chain %d: %+v", w.ChainID, *d)
 
-	err := bridge.VoteProposal(d)
-	logger.Infof("HSM: voted yes to a transfer proposal originated from the deposit %+v", *d)
+	err = bridge.VoteProposal(d)
 	if err != nil {
-		logger.Error(err)
+		return err
 	}
+	logger.Infof("HSM: voted yes to a transfer proposal originated from the deposit %+v", *d)
 
 	// for simplified version with only one relayer for each bridge contract,
 	// we execute the proposal right after voting
 	bridge.ExecuteProposal(d)
 	logger.Infof("HSM: executed the a transfer proposal originated from the deposit %+v", *d)
+	return nil
 }
 
 func (w *Watcher) Watch() chan struct{} {
 	bc, err := blockchain.GetBlockChainFromID(w.ChainID)
 	if err != nil {
-		panic(err)
+		logger.Fatal(err.Error())
 	}
 
 	u := w.getEventStreamURL(bc)
@@ -73,7 +77,10 @@ func (w *Watcher) Watch() chan struct{} {
 			}
 			switch e.Event.Name {
 			case "Deposit":
-				w.handleDepositEvent(&e, bc)
+				err := w.handleDepositEvent(&e, bc)
+				if err != nil {
+					logger.Errorf("Cannot handle event %s: %s", e.Event.Name, err.Error())
+				}
 			}
 		}
 	}()

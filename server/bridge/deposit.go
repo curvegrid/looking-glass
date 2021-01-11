@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/curvegrid/looking-glass/server/blockchain"
+	"github.com/curvegrid/looking-glass/server/customError"
 	"github.com/curvegrid/looking-glass/server/mbAPI"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -23,7 +24,7 @@ type Deposit struct {
 }
 
 // getHandlerAddress gets the handler address from the resourceID recevied from Deposit event
-func getHandlerAddress(resourceID string, bc *blockchain.Blockchain) *blockchain.Address {
+func getHandlerAddress(resourceID string, bc *blockchain.Blockchain) (*blockchain.Address, error) {
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/_resourceIDToHandlerAddress",
 		bc.MbEndpoint, bc.BridgeAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
@@ -34,21 +35,21 @@ func getHandlerAddress(resourceID string, bc *blockchain.Blockchain) *blockchain
 	}
 	result, err := mbAPI.Post(endpoint, bc.BearerToken, payload)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	if result.Status != 200 {
-		panic(result.Message)
+		return nil, customError.NewAPICallError(endpoint, result.Status, result.Message)
 	}
 	var data struct {
 		Ouput blockchain.Address `json:"output"`
 	}
 	if err := json.Unmarshal(result.Result, &data); err != nil {
-		panic(err)
+		return nil, err
 	}
-	return &data.Ouput
+	return &data.Ouput, nil
 }
 
-func getDepositFee(bc *blockchain.Blockchain) *blockchain.Number {
+func getDepositFee(bc *blockchain.Blockchain) (*blockchain.Number, error) {
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/_fee",
 		bc.MbEndpoint, bc.BridgeAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
@@ -58,18 +59,18 @@ func getDepositFee(bc *blockchain.Blockchain) *blockchain.Number {
 	}
 	result, err := mbAPI.Post(endpoint, bc.BearerToken, payload)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	if result.Status != 200 {
-		panic(result.Message)
+		return nil, customError.NewAPICallError(endpoint, result.Status, result.Message)
 	}
 	var data struct {
 		Ouput blockchain.Number `json:"output"`
 	}
 	if err := json.Unmarshal(result.Result, &data); err != nil {
-		panic(err)
+		return nil, err
 	}
-	return &data.Ouput
+	return &data.Ouput, nil
 }
 
 func getDepositData(d *Deposit) []byte {
@@ -81,7 +82,7 @@ func getDepositData(d *Deposit) []byte {
 }
 
 // GetDeposit creates a Deposit struct from a Deposit event emitted by the Bridge contract
-func GetDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) *Deposit {
+func GetDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) (*Deposit, error) {
 	// event received from the Bridge contract only stores
 	// resource ID of the token handler contract,
 	// destination chain ID and the deposit nonce.
@@ -89,7 +90,10 @@ func GetDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) *Deposit {
 	resourceID := fmt.Sprintf("%v", e.Event.Inputs[1].Value)
 	depositNonce := fmt.Sprintf("%v", e.Event.Inputs[2].Value)
 	// we need to use resourceID to find the token handler contract's address
-	handlerAddress := getHandlerAddress(resourceID, bc)
+	handlerAddress, err := getHandlerAddress(resourceID, bc)
+	if err != nil {
+		return nil, err
+	}
 
 	// get the deposit data by calling depositRecords method of the handler contract
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/erc20handler/methods/_depositRecords",
@@ -102,37 +106,37 @@ func GetDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) *Deposit {
 	}
 	result, err := mbAPI.Post(endpoint, bc.BearerToken, payload)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	if result.Status != 200 {
-		panic(result.Message)
+		return nil, customError.NewAPICallError(endpoint, result.Status, result.Message)
 	}
 	var data struct {
 		Ouput []json.RawMessage `json:"output"`
 	}
 	if err := json.Unmarshal(result.Result, &data); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// parse DepositData from known variables
 	var d Deposit
 	if d.DepositNonce, err = strconv.ParseInt(depositNonce, 10, 64); err != nil {
-		panic(err)
+		return nil, err
 	}
 	if err := json.Unmarshal(data.Ouput[0], &d.TokenAddress); err != nil {
-		panic(err)
+		return nil, err
 	}
 	if err := json.Unmarshal(data.Ouput[1], &d.DestinationChainID); err != nil {
-		panic(err)
+		return nil, err
 	}
 	if err := json.Unmarshal(data.Ouput[2], &d.ResourceID); err != nil {
-		panic(err)
+		return nil, err
 	}
 	if err := json.Unmarshal(data.Ouput[3], &d.Recipient); err != nil {
-		panic(err)
+		return nil, err
 	}
 	if err := json.Unmarshal(data.Ouput[5], &d.Amount); err != nil {
-		panic(err)
+		return nil, err
 	}
-	return &d
+	return &d, nil
 }
