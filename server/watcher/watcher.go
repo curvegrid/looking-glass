@@ -34,7 +34,7 @@ func (w *Watcher) handleDepositEvent(e *blockchain.JSONEvent, bc *blockchain.Blo
 	logger.Infof("Got a Deposit event from chain %d: %+v", w.ChainID, *d)
 
 	err := voteProposal(d)
-	logger.Infof("HSM: vote yes to a transfer proposal originated from the deposit %+v", *d)
+	logger.Infof("HSM: voted yes to a transfer proposal originated from the deposit %+v", *d)
 	if err != nil {
 		logger.Error(err)
 	}
@@ -42,7 +42,7 @@ func (w *Watcher) handleDepositEvent(e *blockchain.JSONEvent, bc *blockchain.Blo
 	// for simplified version with only one relayer for each bridge contract,
 	// we execute the proposal right after voting
 	executeProposal(d)
-	logger.Infof("HSM: execute the a transfer proposal originated from the deposit %+v", *d)
+	logger.Infof("HSM: executed the a transfer proposal originated from the deposit %+v", *d)
 }
 
 func (w *Watcher) Watch() chan struct{} {

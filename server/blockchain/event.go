@@ -5,7 +5,6 @@ package blockchain
 import (
 	"time"
 
-	"github.com/curvegrid/multibaas/server/app/sqltypes"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -27,14 +26,14 @@ type MethodInformation struct {
 }
 
 type ContractInformation struct {
-	Address      *sqltypes.Address `json:"address"`
-	AddressLabel string            `json:"addressLabel"`
-	Name         string            `json:"name"`
-	Label        string            `json:"label"`
+	Address      *Address `json:"address"`
+	AddressLabel string   `json:"addressLabel"`
+	Name         string   `json:"name"`
+	Label        string   `json:"label"`
 }
 
 type TransactionInformation struct {
-	TXFrom         *sqltypes.Address    `json:"from"`
+	TXFrom         *Address             `json:"from"`
 	TXData         string               `json:"txData"`
 	TXHash         common.Hash          `json:"txHash"`
 	TXIndexInBlock int                  `json:"txIndexInBlock"`

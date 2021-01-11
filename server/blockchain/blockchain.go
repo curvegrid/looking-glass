@@ -6,15 +6,14 @@ import (
 	"fmt"
 
 	"github.com/curvegrid/gofig"
-	"github.com/curvegrid/multibaas/server/app/sqltypes"
 )
 
 type Blockchain struct {
-	MbEndpoint    string           `desc:"MultiBaas endpoint URL"`
-	BearerToken   string           `desc:"Mulibaas API key"`
-	Confirmations uint             `desc:"number of block confirmations to wait"`
-	BridgeAddress sqltypes.Address `desc:"bridge contract address"`
-	HSMAddress    sqltypes.Address `desc:"HSM address to automate the signing process"`
+	MbEndpoint    string  `desc:"MultiBaas endpoint URL"`
+	BearerToken   string  `desc:"Mulibaas API key"`
+	Confirmations uint    `desc:"number of block confirmations to wait"`
+	BridgeAddress Address `desc:"bridge contract address"`
+	HSMAddress    Address `desc:"HSM address to automate the signing process"`
 }
 
 type BlockchainMapping struct {

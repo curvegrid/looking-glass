@@ -7,12 +7,11 @@ import (
 
 	"github.com/curvegrid/looking-glass/server/blockchain"
 	"github.com/curvegrid/looking-glass/server/mbAPI"
-	"github.com/curvegrid/multibaas/server/app/sqltypes"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func getProposalDataHash(d *Deposit, handlerAddress *sqltypes.Address) common.Hash {
+func getProposalDataHash(d *Deposit, handlerAddress *blockchain.Address) common.Hash {
 	return crypto.Keccak256Hash(append(handlerAddress.Bytes(), getDepositData(d)...))
 }
 
@@ -30,7 +29,7 @@ func executeProposal(d *Deposit) error {
 			json.RawMessage(`"0x` + hex.EncodeToString(getDepositData(d)) + `"`),
 			json.RawMessage(`"` + d.ResourceID + `"`),
 		},
-		TransactionArgs: mbAPI.TransactionArgs{
+		TransactionArgs: blockchain.TransactionArgs{
 			From:          &bc.HSMAddress,
 			SignAndSubmit: true,
 		},
@@ -63,7 +62,7 @@ func voteProposal(d *Deposit) error {
 			json.RawMessage(`"` + d.ResourceID + `"`),
 			json.RawMessage(`"` + dataHash.String() + `"`),
 		},
-		TransactionArgs: mbAPI.TransactionArgs{
+		TransactionArgs: blockchain.TransactionArgs{
 			From:          &bc.HSMAddress,
 			SignAndSubmit: true,
 		},

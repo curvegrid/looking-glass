@@ -9,7 +9,6 @@ import (
 
 	"github.com/curvegrid/looking-glass/server/blockchain"
 	"github.com/curvegrid/looking-glass/server/mbAPI"
-	"github.com/curvegrid/multibaas/server/app/sqltypes"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -18,18 +17,18 @@ type Deposit struct {
 	DestinationChainID int
 	DepositNonce       int64
 	ResourceID         string
-	Amount             mbAPI.Number
-	Recipient          sqltypes.Address
-	TokenAddress       sqltypes.Address
+	Amount             blockchain.Number
+	Recipient          blockchain.Address
+	TokenAddress       blockchain.Address
 }
 
 // getHandlerAddress gets the handler address from the resourceID recevied from Deposit event
-func getHandlerAddress(resourceID string, bc *blockchain.Blockchain) *sqltypes.Address {
+func getHandlerAddress(resourceID string, bc *blockchain.Blockchain) *blockchain.Address {
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/_resourceIDToHandlerAddress",
 		bc.MbEndpoint, bc.BridgeAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
 		Args: []json.RawMessage{json.RawMessage(`"` + resourceID + `"`)},
-		TransactionArgs: mbAPI.TransactionArgs{
+		TransactionArgs: blockchain.TransactionArgs{
 			From: &bc.HSMAddress,
 		},
 	}
@@ -41,7 +40,7 @@ func getHandlerAddress(resourceID string, bc *blockchain.Blockchain) *sqltypes.A
 		panic(result.Message)
 	}
 	var data struct {
-		Ouput sqltypes.Address `json:"output"`
+		Ouput blockchain.Address `json:"output"`
 	}
 	if err := json.Unmarshal(result.Result, &data); err != nil {
 		panic(err)
@@ -49,11 +48,11 @@ func getHandlerAddress(resourceID string, bc *blockchain.Blockchain) *sqltypes.A
 	return &data.Ouput
 }
 
-func getDepositFee(bc *blockchain.Blockchain) *mbAPI.Number {
+func getDepositFee(bc *blockchain.Blockchain) *blockchain.Number {
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/_fee",
 		bc.MbEndpoint, bc.BridgeAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
-		TransactionArgs: mbAPI.TransactionArgs{
+		TransactionArgs: blockchain.TransactionArgs{
 			From: &bc.HSMAddress,
 		},
 	}
@@ -65,7 +64,7 @@ func getDepositFee(bc *blockchain.Blockchain) *mbAPI.Number {
 		panic(result.Message)
 	}
 	var data struct {
-		Ouput mbAPI.Number `json:"output"`
+		Ouput blockchain.Number `json:"output"`
 	}
 	if err := json.Unmarshal(result.Result, &data); err != nil {
 		panic(err)
@@ -97,7 +96,7 @@ func getDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) *Deposit {
 		bc.MbEndpoint, handlerAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
 		Args: []json.RawMessage{json.RawMessage(chainID), json.RawMessage(depositNonce)},
-		TransactionArgs: mbAPI.TransactionArgs{
+		TransactionArgs: blockchain.TransactionArgs{
 			From: &bc.HSMAddress,
 		},
 	}
