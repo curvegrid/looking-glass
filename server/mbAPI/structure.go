@@ -8,12 +8,15 @@ import (
 	"github.com/curvegrid/looking-glass/server/blockchain"
 )
 
+// APICallResult represents the base structure of a Multibaas API call result
 type APICallResult struct {
 	Status  int             `json:"status"`
 	Message string          `json:"message"`
 	Result  json.RawMessage `json:"result,omitempty"`
 }
 
+// JSONPOSTMethodArgs is the arguments used to call a contract method
+// with Multibaas API
 type JSONPOSTMethodArgs struct {
 	Signature        string            `json:"signature"`
 	Args             []json.RawMessage `json:"args"` // Delayed so that we type-check and convert once

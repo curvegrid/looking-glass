@@ -2,6 +2,7 @@
 
 package blockchain
 
+// TransactionArgs holds the special/reserved word values for posting transactions to a chain
 type TransactionArgs struct {
 	From          *Address `json:"from,omitempty"`
 	To            *Address `json:"to,omitempty"`

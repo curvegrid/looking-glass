@@ -9,6 +9,7 @@ import (
 	"net/http"
 )
 
+// Post provides a wrapped function to call a Multibaas POST API
 func Post(endpoint string, apiKey string, payload interface{}) (*APICallResult, error) {
 	b, err := json.Marshal(payload)
 	if err != nil {

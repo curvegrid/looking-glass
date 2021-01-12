@@ -43,12 +43,14 @@ type TransactionInformation struct {
 	Method         *MethodInformation   `json:"method"`
 }
 
+// EventField holds a field in the event's data.
 type EventField struct {
 	Name   string      `json:"name"`
 	Value  interface{} `json:"value"`
 	Hashed bool        `json:"hashed"` // Determines whether the value has been hashed into a keccak256 string.
 }
 
+// JSONEvent is an event returned to an API call
 type JSONEvent struct {
 	TriggeredAt time.Time               `json:"triggeredAt"`
 	Event       *EventInformation       `json:"event"`

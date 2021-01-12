@@ -13,6 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// Deposit is used to represent a cross-chain Deposit transaction initiated
+// by the Bridge contract.
 type Deposit struct {
 	OriginChainID      int
 	DestinationChainID int
@@ -49,6 +51,8 @@ func getHandlerAddress(resourceID string, bc *blockchain.Blockchain) (*blockchai
 	return &data.Ouput, nil
 }
 
+// getDepositFee returns the deposit fee required by the Bridge contract
+// to initiate a deposit transaction
 func getDepositFee(bc *blockchain.Blockchain) (*blockchain.Number, error) {
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/_fee",
 		bc.MbEndpoint, bc.BridgeAddress.String())
@@ -73,6 +77,8 @@ func getDepositFee(bc *blockchain.Blockchain) (*blockchain.Number, error) {
 	return &data.Ouput, nil
 }
 
+// getDepositData returns the packed deposit data with the format:
+// amount(bytes32)recipient_address_length(bytes32)recipient_address(bytes)
 func getDepositData(d *Deposit) []byte {
 	var data []byte
 	data = append(data, common.LeftPadBytes(d.Amount.Bytes(), 32)...)
@@ -81,7 +87,7 @@ func getDepositData(d *Deposit) []byte {
 	return data
 }
 
-// GetDeposit creates a Deposit struct from a Deposit event emitted by the Bridge contract
+// GetDeposit parses a cross-chain deposit transaction from a Deposit event emitted from the Bridge contract
 func GetDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) (*Deposit, error) {
 	// event received from the Bridge contract only stores
 	// resource ID of the token handler contract,
@@ -92,6 +98,7 @@ func GetDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) (*Deposit, e
 	// we need to use resourceID to find the token handler contract's address
 	handlerAddress, err := getHandlerAddress(resourceID, bc)
 	if err != nil {
+
 		return nil, err
 	}
 

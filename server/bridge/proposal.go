@@ -14,10 +14,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+// getProposalDataHash returns the data hash used to call voteProposal method
+// of a Bridge contract.
 func getProposalDataHash(d *Deposit, handlerAddress *blockchain.Address) common.Hash {
 	return crypto.Keccak256Hash(append(handlerAddress.Bytes(), getDepositData(d)...))
 }
 
+// ExecuteProposal executes a Deposit proposal by calling Bridge contract's ExecuteProposal method
 func ExecuteProposal(d *Deposit) error {
 	bc, err := blockchain.GetBlockChainFromID(d.DestinationChainID)
 	if err != nil {
@@ -48,6 +51,7 @@ func ExecuteProposal(d *Deposit) error {
 	return nil
 }
 
+// ExecuteProposal votes to a Deposit proposal by calling Bridge contract's VoteProposal method
 func VoteProposal(d *Deposit) error {
 	bc, err := blockchain.GetBlockChainFromID(d.DestinationChainID)
 	if err != nil {

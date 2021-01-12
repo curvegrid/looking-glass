@@ -8,6 +8,7 @@ import (
 	"github.com/curvegrid/gofig"
 )
 
+// Blockchain represents a blockchain deployed in a Multibaas instance
 type Blockchain struct {
 	MbEndpoint    string  `desc:"MultiBaas endpoint URL"`
 	BearerToken   string  `desc:"Mulibaas API key"`
@@ -16,12 +17,14 @@ type Blockchain struct {
 	HSMAddress    Address `desc:"HSM address to automate the signing process"`
 }
 
+// BlockchainMapping maps an unique ID to a blockchain
 type BlockchainMapping struct {
 	ChainIdToBlockchain map[int]*Blockchain
 }
 
 var blockchainMapping BlockchainMapping
 
+// GetBlockChainFromID returns a blockchain based on its chain ID
 func GetBlockChainFromID(chainID int) (*Blockchain, error) {
 	blockchain, exists := blockchainMapping.ChainIdToBlockchain[chainID]
 	if !exists {
@@ -30,6 +33,7 @@ func GetBlockChainFromID(chainID int) (*Blockchain, error) {
 	return blockchain, nil
 }
 
+// InitBlockchainsFromConfigFile initializes blockchainMapping from a config file
 func InitBlockchainsFromConfigFile(filepath string) {
 	gofig.SetEnvPrefix("LG")
 	gofig.SetConfigFileFlag("c", "config file")
