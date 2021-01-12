@@ -34,3 +34,18 @@ func InitResourcesFromConfigFile(filepath string) {
 func GetResourceMapping() *ResourceMapping {
 	return &resourceMapping
 }
+
+// GetResourceIDsFromTokenAddress returns a list of resourceID
+// associated with a given tokenAddress, chainID pair.
+func GetResourceIDsFromTokenAddress(tokenAddress blockchain.Address, chainID int) []string {
+	var ids []string
+	for resourceID, resources := range resourceMapping.ResourceIDToResource {
+		for _, resource := range resources {
+			if resource.TokenAddress.String() == tokenAddress.String() && chainID == resource.ChainID {
+				ids = append(ids, resourceID)
+				break
+			}
+		}
+	}
+	return ids
+}

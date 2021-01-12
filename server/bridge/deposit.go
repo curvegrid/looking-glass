@@ -3,6 +3,7 @@
 package bridge
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -92,9 +93,9 @@ func GetDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) (*Deposit, e
 	// event received from the Bridge contract only stores
 	// resource ID of the token handler contract,
 	// destination chain ID and the deposit nonce.
-	chainID := fmt.Sprintf("%v", e.Event.Inputs[0].Value)
-	resourceID := fmt.Sprintf("%v", e.Event.Inputs[1].Value)
-	depositNonce := fmt.Sprintf("%v", e.Event.Inputs[2].Value)
+	chainID := fmt.Sprint(e.Event.Inputs[0].Value)
+	resourceID := fmt.Sprint(e.Event.Inputs[1].Value)
+	depositNonce := fmt.Sprint(e.Event.Inputs[2].Value)
 	// we need to use resourceID to find the token handler contract's address
 	handlerAddress, err := getHandlerAddress(resourceID, bc)
 	if err != nil {
@@ -146,4 +147,34 @@ func GetDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) (*Deposit, e
 		return nil, err
 	}
 	return &d, nil
+}
+
+// CreateDeposit initiates a cross-chain transfer by calling Bridge contract's Deposit method
+func CreateDeposit(d *Deposit, bc *blockchain.Blockchain) error {
+	fee, err := getDepositFee(bc)
+	if err != nil {
+		return err
+	}
+	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/deposit",
+		bc.MbEndpoint, bc.BridgeAddress.String())
+	payload := mbAPI.JSONPOSTMethodArgs{
+		Args: []json.RawMessage{
+			json.RawMessage(`"` + fmt.Sprint(d.DestinationChainID) + `"`),
+			json.RawMessage(`"` + d.ResourceID + `"`),
+			json.RawMessage(`"0x` + hex.EncodeToString(getDepositData(d)) + `"`),
+		},
+		TransactionArgs: blockchain.TransactionArgs{
+			From:          &bc.HSMAddress,
+			Value:         fee,
+			SignAndSubmit: true,
+		},
+	}
+	result, err := mbAPI.Post(endpoint, bc.BearerToken, payload)
+	if err != nil {
+		return err
+	}
+	if result.Status != 200 {
+		return customError.NewAPICallError(endpoint, result.Status, result.Message)
+	}
+	return nil
 }

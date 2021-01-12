@@ -30,8 +30,8 @@ func ExecuteProposal(d *Deposit) error {
 		bc.MbEndpoint, bc.BridgeAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
 		Args: []json.RawMessage{
-			json.RawMessage(`"` + fmt.Sprintf("%d", d.OriginChainID) + `"`),
-			json.RawMessage(`"` + fmt.Sprintf("%d", d.DepositNonce) + `"`),
+			json.RawMessage(`"` + fmt.Sprint(d.OriginChainID) + `"`),
+			json.RawMessage(`"` + fmt.Sprint(d.DepositNonce) + `"`),
 			json.RawMessage(`"0x` + hex.EncodeToString(getDepositData(d)) + `"`),
 			json.RawMessage(`"` + d.ResourceID + `"`),
 		},
@@ -67,8 +67,8 @@ func VoteProposal(d *Deposit) error {
 		bc.MbEndpoint, bc.BridgeAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
 		Args: []json.RawMessage{
-			json.RawMessage(`"` + fmt.Sprintf("%d", d.OriginChainID) + `"`),
-			json.RawMessage(`"` + fmt.Sprintf("%d", d.DepositNonce) + `"`),
+			json.RawMessage(`"` + fmt.Sprint(d.OriginChainID) + `"`),
+			json.RawMessage(`"` + fmt.Sprint(d.DepositNonce) + `"`),
 			json.RawMessage(`"` + d.ResourceID + `"`),
 			json.RawMessage(`"` + dataHash.String() + `"`),
 		},
