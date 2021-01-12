@@ -1,0 +1,16 @@
+{
+  "resourceIDToResource": {
+    "0x0000000000000000000000000000000000000000000000000000000000000001": [
+      {
+        "chainID": 0,
+        "tokenAddress": "0x9deE62D32898B37F2BDf7e7cB1FA16a45D31D67a",
+        "erc20HandlerAddres": "0xb6652a7EaAB6591Bf08a1EeE2720F3199c474283"
+      },
+      {
+        "chainID": 1,
+        "tokenAddress": "0x3f02eACbfd6dfeB19c5a56f5645c0c582c1896c2",
+        "erc20HandlerAddres": "0x469519c105E6BF86aD4CE1A246496262568a83EA"
+      }
+    ]
+  }
+}
