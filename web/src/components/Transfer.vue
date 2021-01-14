@@ -1,5 +1,15 @@
 <template>
-  <div>TBA</div>
+  <div>
+    <v-form
+      ref="form"
+    >
+      <v-container>
+        <v-text-field
+          label="Amount"
+        />
+      </v-container>
+    </v-form>
+  </div>
 </template>
 
 <script>
