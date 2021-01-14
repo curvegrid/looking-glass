@@ -4,20 +4,18 @@ package bridge
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 
 	"github.com/curvegrid/looking-glass/server/blockchain"
 	"github.com/curvegrid/looking-glass/server/customError"
 	"github.com/curvegrid/looking-glass/server/mbAPI"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // getProposalDataHash returns the data hash used to call voteProposal method
 // of a Bridge contract.
-func getProposalDataHash(d *Deposit, handlerAddress *blockchain.Address) common.Hash {
-	return crypto.Keccak256Hash(append(handlerAddress.Bytes(), getDepositData(d)...))
+func getProposalDataHash(d *Deposit, handlerAddress *blockchain.Address) string {
+	return crypto.Keccak256Hash(append(handlerAddress.Bytes(), getDepositData(d)...)).String()
 }
 
 // ExecuteProposal executes a Deposit proposal by calling Bridge contract's ExecuteProposal method
@@ -29,11 +27,11 @@ func ExecuteProposal(d *Deposit) error {
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/executeProposal",
 		bc.MbEndpoint, bc.BridgeAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
-		Args: []json.RawMessage{
-			json.RawMessage(`"` + fmt.Sprint(d.OriginChainID) + `"`),
-			json.RawMessage(`"` + fmt.Sprint(d.DepositNonce) + `"`),
-			json.RawMessage(`"0x` + hex.EncodeToString(getDepositData(d)) + `"`),
-			json.RawMessage(`"` + d.ResourceID + `"`),
+		Args: []interface{}{
+			d.OriginChainID,
+			d.DepositNonce,
+			"0x" + hex.EncodeToString(getDepositData(d)),
+			d.ResourceID,
 		},
 		TransactionArgs: blockchain.TransactionArgs{
 			From:          &bc.HSMAddress,
@@ -66,11 +64,11 @@ func VoteProposal(d *Deposit) error {
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/voteProposal",
 		bc.MbEndpoint, bc.BridgeAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
-		Args: []json.RawMessage{
-			json.RawMessage(`"` + fmt.Sprint(d.OriginChainID) + `"`),
-			json.RawMessage(`"` + fmt.Sprint(d.DepositNonce) + `"`),
-			json.RawMessage(`"` + d.ResourceID + `"`),
-			json.RawMessage(`"` + dataHash.String() + `"`),
+		Args: []interface{}{
+			d.OriginChainID,
+			d.DepositNonce,
+			d.ResourceID,
+			dataHash,
 		},
 		TransactionArgs: blockchain.TransactionArgs{
 			From:          &bc.HSMAddress,

@@ -31,7 +31,7 @@ func getHandlerAddress(resourceID string, bc *blockchain.Blockchain) (*blockchai
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/_resourceIDToHandlerAddress",
 		bc.MbEndpoint, bc.BridgeAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
-		Args: []json.RawMessage{json.RawMessage(`"` + resourceID + `"`)},
+		Args: []interface{}{resourceID},
 		TransactionArgs: blockchain.TransactionArgs{
 			From: &bc.HSMAddress,
 		},
@@ -107,7 +107,7 @@ func GetDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) (*Deposit, e
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/erc20handler/methods/_depositRecords",
 		bc.MbEndpoint, handlerAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
-		Args: []json.RawMessage{json.RawMessage(chainID), json.RawMessage(depositNonce)},
+		Args: []interface{}{chainID, depositNonce},
 		TransactionArgs: blockchain.TransactionArgs{
 			From: &bc.HSMAddress,
 		},
@@ -158,10 +158,10 @@ func CreateDeposit(d *Deposit, bc *blockchain.Blockchain) error {
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/deposit",
 		bc.MbEndpoint, bc.BridgeAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
-		Args: []json.RawMessage{
-			json.RawMessage(`"` + fmt.Sprint(d.DestinationChainID) + `"`),
-			json.RawMessage(`"` + d.ResourceID + `"`),
-			json.RawMessage(`"0x` + hex.EncodeToString(getDepositData(d)) + `"`),
+		Args: []interface{}{
+			d.DestinationChainID,
+			d.ResourceID,
+			"0x" + hex.EncodeToString(getDepositData(d)),
 		},
 		TransactionArgs: blockchain.TransactionArgs{
 			From:          &bc.HSMAddress,

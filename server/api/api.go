@@ -16,7 +16,7 @@ func InitAPI() {
 	r := mux.NewRouter()
 	r.HandleFunc("/api/deposit", Deposit).Methods("POST")
 
-	logger.Info("Starting Looking-Glass server on port 8082")
+	logger.Info("Starting Looking-Glass server on localhost:8082")
 	http.ListenAndServe(":8082", r)
 }
 

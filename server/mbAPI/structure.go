@@ -18,9 +18,9 @@ type APICallResult struct {
 // JSONPOSTMethodArgs is the arguments used to call a contract method
 // with Multibaas API
 type JSONPOSTMethodArgs struct {
-	Signature        string            `json:"signature"`
-	Args             []json.RawMessage `json:"args"` // Delayed so that we type-check and convert once
-	Preview          json.RawMessage   `json:"preview,omitempty"`
-	ContractOverride bool              `json:"contractOverride"`
+	Signature        string        `json:"signature"`
+	Args             []interface{} `json:"args"` // Delayed so that we type-check and convert once
+	Preview          interface{}   `json:"preview,omitempty"`
+	ContractOverride bool          `json:"contractOverride"`
 	blockchain.TransactionArgs
 }
