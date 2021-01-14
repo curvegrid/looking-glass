@@ -12,6 +12,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
+// InitAPI initializes looking-glass APIs
 func InitAPI() {
 	r := mux.NewRouter()
 	r.HandleFunc("/api/deposit", Deposit).Methods("POST")
@@ -35,12 +36,17 @@ func parseJSONBody(r io.Reader, v interface{}) error {
 	return nil
 }
 
+// Deposit receives cross-chain deposit data and initiates the
+// transaction using the Bridge contract.
 func Deposit(w http.ResponseWriter, r *http.Request) {
 	var deposit DepositReqBodyJSON
 	if err := parseJSONBody(r.Body, &deposit); err != nil {
 		logger.Error(err.Error())
 		return
 	}
+
+	// first, we need to find the shared resourceID across two different chains
+	// for two given tokens
 	originIDs := bridge.GetResourceIDsFromTokenAddress(deposit.OriginTokenAddress, deposit.OriginChainID)
 	destinationIDs := bridge.GetResourceIDsFromTokenAddress(deposit.DestinationTokenAddress, deposit.DestinationChainID)
 
