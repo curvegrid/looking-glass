@@ -9,16 +9,26 @@ import (
 	"github.com/curvegrid/looking-glass/server/blockchain"
 	"github.com/curvegrid/looking-glass/server/bridge"
 	"github.com/gorilla/mux"
+	"github.com/labstack/echo/v4"
 	logger "github.com/sirupsen/logrus"
 )
 
 // InitAPI initializes looking-glass APIs
 func InitAPI() {
-	r := mux.NewRouter()
-	r.HandleFunc("/api/deposit", Deposit).Methods("POST")
+	muxRouter := mux.NewRouter()
+	muxRouter.HandleFunc("/api/deposit", Deposit).Methods("POST")
+	muxRouter.HandleFunc("/api/resources", GetResources).Methods("GET")
+
+	echoRouter := echo.New()
+	apiRouter := echoRouter.Group("/api",
+		CORSMiddleware(getSupportedDomains()), // CORS support
+	)
+	apiRouter.Any("/*", echo.WrapHandler(muxRouter))
 
 	logger.Info("Starting Looking-Glass server on localhost:8082")
-	http.ListenAndServe(":8082", r)
+	server := echoRouter.Server
+	server.Addr = "localhost:8082"
+	server.ListenAndServe()
 }
 
 // parseJSONBody reads the body from an http request and unmarshals
@@ -34,6 +44,28 @@ func parseJSONBody(r io.Reader, v interface{}) error {
 	}
 
 	return nil
+}
+
+// writeJSON writes a JSON data into the http response
+func writeJSON(w http.ResponseWriter, status int, v interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	responseBytes, err := json.Marshal(v)
+	if err != nil {
+		logger.Errorf("Unable to send HTTP response, marshall JSON: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	_, err = w.Write(responseBytes)
+	if err != nil {
+		logger.Errorf("Unable to send HTTP response, response writer returned: %v", err)
+	}
+}
+
+// GetResources returns a resource mapping that the application knows
+func GetResources(w http.ResponseWriter, r *http.Request) {
+	resourceMapping := bridge.GetResourceMapping()
+	writeJSON(w, http.StatusOK, resourceMapping)
 }
 
 // Deposit receives cross-chain deposit data and initiates the
