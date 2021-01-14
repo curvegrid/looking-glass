@@ -1,16 +1,16 @@
 <template>
   <div id="app">
-    <Transfer/>
+    <Deposit/>
   </div>
 </template>
 
 <script>
-import Transfer from './components/Transfer.vue'
+import Deposit from './components/Deposit.vue'
 
 export default {
   name: 'App',
   components: {
-    Transfer
+    Deposit
   }
 }
 </script>
