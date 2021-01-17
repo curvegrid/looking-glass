@@ -4,8 +4,6 @@ package blockchain
 
 import (
 	"fmt"
-
-	"github.com/curvegrid/gofig"
 )
 
 // Blockchain represents a blockchain deployed in a Multibaas instance
@@ -22,7 +20,10 @@ type BlockchainMapping struct {
 	ChainIdToBlockchain map[int]*Blockchain
 }
 
-var blockchainMapping BlockchainMapping
+var blockchainMapping *BlockchainMapping
+
+// Initialize blockchain mapping
+func InitBlockchainMapping(m *BlockchainMapping) { blockchainMapping = m }
 
 // GetBlockChainFromID returns a blockchain based on its chain ID
 func GetBlockChainFromID(chainID int) (*Blockchain, error) {
@@ -31,12 +32,4 @@ func GetBlockChainFromID(chainID int) (*Blockchain, error) {
 		return nil, fmt.Errorf("unknown chainID: %d", chainID)
 	}
 	return blockchain, nil
-}
-
-// InitBlockchainsFromConfigFile initializes blockchainMapping from a config file
-func InitBlockchainsFromConfigFile(filepath string) {
-	gofig.SetEnvPrefix("LG")
-	gofig.SetConfigFileFlag("c", "config file")
-	gofig.AddConfigFile(filepath) // gofig will try to load looking-glass.json, looking-glass.toml and looking-glass.yaml
-	gofig.Parse(&blockchainMapping)
 }

@@ -1,11 +1,7 @@
 package bridge
 
 import (
-	"encoding/json"
-	"io/ioutil"
-
 	"github.com/curvegrid/looking-glass/server/blockchain"
-	logger "github.com/sirupsen/logrus"
 )
 
 type Resource struct {
@@ -14,26 +10,19 @@ type Resource struct {
 	ERC20HandlerAddres blockchain.Address `json:"erc20HandlerAddres"`
 }
 
+// ResourceMapping maps from a resource id to a list of corresponding
+// resources across different chains.
 type ResourceMapping struct {
 	ResourceIDToResource map[string][]Resource `json:"resourceIDToResource"`
 }
 
-var resourceMapping ResourceMapping
+var resourceMapping *ResourceMapping
 
-// InitResourcesFromConfigFile initializes resourceMapping from a config file
-func InitResourcesFromConfigFile(filepath string) {
-	data, err := ioutil.ReadFile(filepath)
-	if err != nil {
-		logger.Fatalf("cannot read resources config file: %s", err.Error())
-	}
-	if err := json.Unmarshal(data, &resourceMapping); err != nil {
-		logger.Fatalf("cannot unmarshal resources config file: %s", err.Error())
-	}
-}
+// InitResourceMapping initializes resource mapping
+func InitResourceMapping(m *ResourceMapping) { resourceMapping = m }
 
-func GetResourceMapping() *ResourceMapping {
-	return &resourceMapping
-}
+// GetResourceMapping returns the resource mapping
+func GetResourceMapping() *ResourceMapping { return resourceMapping }
 
 // GetResourceIDsFromTokenAddress returns a list of resourceID
 // associated with a given tokenAddress, chainID pair.

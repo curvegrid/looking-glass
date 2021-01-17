@@ -8,8 +8,10 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
+var domains []string
+
 // CORSMiddleware handles the Multibaas app's CORS options.
-func CORSMiddleware(domains []string) echo.MiddlewareFunc {
+func CORSMiddleware() echo.MiddlewareFunc {
 	allowOriginFunc := func(origin string) (bool, error) {
 		// in theory this check should be done in the CORS middleware but it appears not to be
 		if origin == "" {
@@ -45,8 +47,4 @@ func matchCORSOrigin(origin, allowed string) bool {
 		return len(origin) >= len(prefix)+len(suffix) && strings.HasPrefix(origin, prefix) && strings.HasSuffix(origin, suffix)
 	}
 	return origin == allowed
-}
-
-func getSupportedDomains() []string {
-	return []string{"http://localhost:8083"}
 }

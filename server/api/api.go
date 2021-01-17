@@ -21,7 +21,7 @@ func InitAPI() {
 
 	echoRouter := echo.New()
 	apiRouter := echoRouter.Group("/api",
-		CORSMiddleware(getSupportedDomains()), // CORS support
+		CORSMiddleware(), // CORS support
 	)
 	apiRouter.Any("/*", echo.WrapHandler(muxRouter))
 
