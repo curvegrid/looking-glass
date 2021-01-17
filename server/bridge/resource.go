@@ -22,7 +22,7 @@ var resourceMapping *ResourceMapping
 func InitResourceMapping(m *ResourceMapping) { resourceMapping = m }
 
 // GetResourceMapping returns the resource mapping
-func GetResourceMapping() *ResourceMapping { return resourceMapping }
+func GetResourceMapping() map[string][]Resource { return resourceMapping.ResourceIDToResource }
 
 // GetResourceIDsFromTokenAddress returns a list of resourceID
 // associated with a given tokenAddress, chainID pair.

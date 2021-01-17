@@ -2,7 +2,21 @@
   <div>
     <v-form ref="form">
       <v-container>
-        <v-text-field label="Amount" />
+        <v-text-field v-model="amount" label="Amount" />
+        <v-text-field v-model="recipient" label="Recipient" />
+        <v-autocomplete
+          v-model="originToken"
+          :items="tokens"
+          :loading="isLoading"
+        />
+        <v-autocomplete
+          v-model="destinationToken"
+          :items="tokens"
+          :loading="isLoading"
+        />
+        <v-btn @click="deposit">
+          Deposit
+        </v-btn>
       </v-container>
     </v-form>
   </div>
@@ -16,7 +30,16 @@ import axios from "axios";
 export default {
   data() {
     return {
+      // form data
       amount: 0,
+      recipient: "",
+      originToken: {},
+      destinationToken: {},
+
+      // program state
+      isLoading: false,
+
+      // parsed data
       tokens: []
     };
   },
@@ -26,9 +49,45 @@ export default {
   methods: {
     async getTokens() {
       try {
+        this.isLoading = true;
         const response = await axios.get("/api/resources");
-        this.resources = response.data;
-        console.log(JSON.stringify(this.resources));
+        const resourceMapping = response.data;
+        this.parseTokens(resourceMapping);
+      } catch (err) {
+        console.error(err);
+      }
+      this.isLoading = false;
+    },
+    // parse a mapping from resource id to a list of
+    // corresponding resources
+    // into a list of tokens
+    // Note: resource's structure: ({ chainID, tokenAddress, tokenHandlerAddress })
+    async parseTokens(resourceMapping) {
+      this.tokens = [];
+      Object.values(resourceMapping).forEach(resources => {
+        resources.forEach(resource => {
+          console.log(JSON.stringify(resource));
+          this.tokens.push({
+            value: {
+              tokenAddress: resource.tokenAddress,
+              chainID: resource.chainID
+            },
+            text: `address: ${resource.tokenAddress}, chainID: ${resource.chainID}`
+          });
+        });
+      });
+    },
+    async deposit() {
+      const depositData = {
+        amount: this.amount,
+        recipient: this.recipient,
+        originChainID: this.originToken.chainID,
+        originTokenAddress: this.originToken.tokenAddress,
+        destinationChainID: this.destinationToken.chainID,
+        destinationTokenAddress: this.destinationToken.tokenAddress
+      };
+      try {
+        await axios.post("/api/deposit", depositData);
       } catch (err) {
         console.error(err);
       }

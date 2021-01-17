@@ -1,27 +1,18 @@
 <template>
-  <div id="app">
-    <Deposit/>
-  </div>
+  <v-app>
+    <v-main>
+      <Deposit />
+    </v-main>
+  </v-app>
 </template>
 
 <script>
-import Deposit from './components/Deposit.vue'
+import Deposit from "./components/Deposit.vue";
 
 export default {
-  name: 'App',
+  name: "App",
   components: {
     Deposit
   }
-}
+};
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
