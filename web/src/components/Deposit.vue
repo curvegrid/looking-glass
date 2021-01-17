@@ -11,7 +11,7 @@
 <script>
 // Copyright (c) 2021 Curvegrid Inc.
 
-import axios from "../js/axios";
+import axios from "axios";
 
 export default {
   data() {
@@ -27,8 +27,8 @@ export default {
     async getTokens() {
       try {
         const response = await axios.get("/api/resources");
-        this.tokens = response.data.result;
-        console.log(JSON.stringify(this.tokens));
+        this.resources = response.data;
+        console.log(JSON.stringify(this.resources));
       } catch (err) {
         console.error(err);
       }

@@ -10,6 +10,9 @@ import (
 
 var domains []string
 
+// InitCorsDomains initializes a list of cors domains
+func InitCorsDomains(d []string) { domains = d }
+
 // CORSMiddleware handles the Multibaas app's CORS options.
 func CORSMiddleware() echo.MiddlewareFunc {
 	allowOriginFunc := func(origin string) (bool, error) {

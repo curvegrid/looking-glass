@@ -10,25 +10,33 @@ import (
 	"github.com/curvegrid/looking-glass/server/bridge"
 	"github.com/gorilla/mux"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	logger "github.com/sirupsen/logrus"
 )
 
 // InitAPI initializes looking-glass APIs
-func InitAPI() {
+func InitAPI(host string, web string) {
 	muxRouter := mux.NewRouter()
 	muxRouter.HandleFunc("/api/deposit", Deposit).Methods("POST")
 	muxRouter.HandleFunc("/api/resources", GetResources).Methods("GET")
 
 	echoRouter := echo.New()
+	if web != "" {
+		// static file serving
+		echoRouter.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+			Root:   web,
+			Browse: false,
+			HTML5:  true,
+			Index:  "index.html",
+		}))
+	}
 	apiRouter := echoRouter.Group("/api",
 		CORSMiddleware(), // CORS support
 	)
 	apiRouter.Any("/*", echo.WrapHandler(muxRouter))
 
-	logger.Info("Starting Looking-Glass server on localhost:8082")
-	server := echoRouter.Server
-	server.Addr = "localhost:8082"
-	server.ListenAndServe()
+	logger.Infof("Starting Looking-Glass server on %s", host)
+	logger.Fatal(echoRouter.Start(host))
 }
 
 // parseJSONBody reads the body from an http request and unmarshals
