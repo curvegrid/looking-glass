@@ -150,13 +150,20 @@ func GetDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) (*Deposit, e
 }
 
 // CreateDeposit initiates a cross-chain transfer by calling Bridge contract's Deposit method
-func CreateDeposit(d *Deposit, bc *blockchain.Blockchain) error {
+func CreateDeposit(d *Deposit, bc *blockchain.Blockchain, submit bool) (*mbAPI.APICallResult, error) {
 	fee, err := getDepositFee(bc)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/bridge/methods/deposit",
 		bc.MbEndpoint, bc.BridgeAddress.String())
+
+	// send from the recipient address in the original chain to the same address
+	// in the destination chain or use HSM to automate the signing process
+	from := &d.Recipient
+	if submit {
+		from = &bc.HSMAddress
+	}
 	payload := mbAPI.JSONPOSTMethodArgs{
 		Args: []interface{}{
 			d.DestinationChainID,
@@ -164,17 +171,17 @@ func CreateDeposit(d *Deposit, bc *blockchain.Blockchain) error {
 			"0x" + hex.EncodeToString(getDepositData(d)),
 		},
 		TransactionArgs: blockchain.TransactionArgs{
-			From:          &bc.HSMAddress,
+			From:          from,
 			Value:         fee,
-			SignAndSubmit: true,
+			SignAndSubmit: submit,
 		},
 	}
 	result, err := mbAPI.Post(endpoint, bc.BearerToken, payload)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if result.Status != 200 {
-		return customError.NewAPICallError(endpoint, result.Status, result.Message)
+		return nil, customError.NewAPICallError(endpoint, result.Status, result.Message)
 	}
-	return nil
+	return result, nil
 }

@@ -120,7 +120,11 @@ func Deposit(w http.ResponseWriter, r *http.Request) {
 		logger.Error(err.Error())
 		return
 	}
-	if err := bridge.CreateDeposit(d, bc); err != nil {
+	submit := false
+	result, err := bridge.CreateDeposit(d, bc, submit)
+	if err != nil {
 		logger.Error(err.Error())
+		return
 	}
+	writeJSON(w, result.Status, result.Result)
 }
