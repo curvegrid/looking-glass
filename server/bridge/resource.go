@@ -5,9 +5,9 @@ import (
 )
 
 type Resource struct {
-	ChainID            int                `json:"chainID"`
-	TokenAddress       blockchain.Address `json:"tokenAddress"`
-	ERC20HandlerAddres blockchain.Address `json:"erc20HandlerAddres"`
+	ChainID             int                `json:"chainID"`
+	TokenAddress        blockchain.Address `json:"tokenAddress"`
+	ERC20HandlerAddress blockchain.Address `json:"erc20HandlerAddress"`
 }
 
 // ResourceMapping maps from a resource id to a list of corresponding
