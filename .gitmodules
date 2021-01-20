@@ -1,3 +1,0 @@
-[submodule "chainbridge-solidity"]
-	path = chainbridge-solidity
-	url = https://github.com/ChainSafe/chainbridge-solidity
