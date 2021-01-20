@@ -5,6 +5,7 @@ package watcher
 import (
 	"fmt"
 	"net/url"
+	"strconv"
 
 	"github.com/curvegrid/looking-glass/server/blockchain"
 	"github.com/curvegrid/looking-glass/server/bridge"
@@ -34,8 +35,25 @@ func (w *Watcher) getEventStreamURL(bc *blockchain.Blockchain) *url.URL {
 
 // handleDepositEvent reads a Deposit event. It then uses HSM auto-signing to
 // vote/execute the (cross-chain) deposit proposal associated with the read event.
-func (w *Watcher) handleDepositEvent(e *blockchain.JSONEvent, bc *blockchain.Blockchain) error {
-	d, err := bridge.GetDeposit(e, bc)
+func (w *Watcher) handleDepositEvent(e *blockchain.JSONEvent) error {
+	destinationChainID, err := strconv.Atoi(fmt.Sprint(e.Event.Inputs[0].Value))
+	if err != nil {
+		return err
+	}
+	resourceID := fmt.Sprint(e.Event.Inputs[1].Value)
+	depositNonce, err := strconv.ParseInt(fmt.Sprint(e.Event.Inputs[2].Value), 10, 64)
+	if err != nil {
+		return err
+	}
+
+	// retrieve the blockchain data from the watcher (current chain)
+	// to query the deposit data.
+	bc, err := blockchain.GetBlockChainFromID(w.ChainID)
+	if err != nil {
+		return err
+	}
+
+	d, err := bridge.GetDeposit(bc, destinationChainID, resourceID, depositNonce)
 	if err != nil {
 		return err
 	}
@@ -47,11 +65,69 @@ func (w *Watcher) handleDepositEvent(e *blockchain.JSONEvent, bc *blockchain.Blo
 		return err
 	}
 	logger.Infof("HSM: voted yes to a transfer proposal originated from the deposit %+v", *d)
+	return nil
+}
 
-	// for simplified version with only one relayer for each bridge contract,
-	// we execute the proposal right after voting
-	bridge.ExecuteProposal(d)
+func (w *Watcher) parseProposalFromEvent(e *blockchain.JSONEvent) (*bridge.Proposal, error) {
+	var p bridge.Proposal
+	var err error
+
+	p.DestinationChainID = w.ChainID
+	p.OriginChainID, err = strconv.Atoi(fmt.Sprint(e.Event.Inputs[0].Value))
+	if err != nil {
+		return nil, err
+	}
+	p.ResourceID = fmt.Sprint(e.Event.Inputs[1].Value)
+	p.DepositNonce, err = strconv.ParseInt(fmt.Sprint(e.Event.Inputs[2].Value), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	p.Status, err = strconv.Atoi(fmt.Sprint(e.Event.Inputs[3].Value))
+	if err != nil {
+		return nil, err
+	}
+	p.DataHash = fmt.Sprint(e.Event.Inputs[4].Value)
+
+	return &p, nil
+}
+
+// handleProposalEvent reads a ProposalEvent. Depends on the proposal's status, the
+// watcher then uses HSM to execute the proposal.
+func (w *Watcher) handleProposalEvent(e *blockchain.JSONEvent) error {
+	p, err := w.parseProposalFromEvent(e)
+	if err != nil {
+		return err
+	}
+
+	logger.Infof("Got ProposalEvent event from chain %d with proposal %+v", w.ChainID, *p)
+	if p.Status != 2 {
+		return nil
+	}
+
+	// retrieve blockchain from the origin chain to
+	// query the deposit data
+	bc, err := blockchain.GetBlockChainFromID(p.OriginChainID)
+	if err != nil {
+		return err
+	}
+
+	d, err := bridge.GetDeposit(bc, p.DestinationChainID, p.ResourceID, p.DepositNonce)
+	if err != nil {
+		return err
+	}
+	if err := bridge.ExecuteProposal(d); err != nil {
+		return err
+	}
 	logger.Infof("HSM: executed a transfer proposal originated from the deposit %+v", *d)
+	return nil
+}
+
+func (w *Watcher) handleProposalVote(e *blockchain.JSONEvent) error {
+	p, err := w.parseProposalFromEvent(e)
+	if err != nil {
+		return err
+	}
+	logger.Infof("Got ProposalVote event from chain %d with proposal %+v", w.ChainID, *p)
 	return nil
 }
 
@@ -83,9 +159,20 @@ func (w *Watcher) Watch() chan struct{} {
 			}
 			switch e.Event.Name {
 			case "Deposit":
-				err := w.handleDepositEvent(&e, bc)
-				if err != nil {
+				if err := w.handleDepositEvent(&e); err != nil {
 					logger.Errorf("Cannot handle event %s: %s", e.Event.Name, err.Error())
+				}
+			case "ProposalEvent":
+				{
+					if err := w.handleProposalEvent(&e); err != nil {
+						logger.Errorf("Cannot handle event %s: %s", e.Event.Name, err.Error())
+					}
+				}
+			case "ProposalVote":
+				{
+					if err := w.handleProposalVote(&e); err != nil {
+						logger.Errorf("Cannot handle event %s: %s", e.Event.Name, err.Error())
+					}
 				}
 			}
 		}

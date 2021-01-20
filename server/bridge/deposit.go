@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/curvegrid/looking-glass/server/blockchain"
 	"github.com/curvegrid/looking-glass/server/customError"
@@ -88,26 +87,19 @@ func getDepositData(d *Deposit) []byte {
 	return data
 }
 
-// GetDeposit parses a cross-chain deposit transaction from a Deposit event emitted from the Bridge contract
-func GetDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) (*Deposit, error) {
-	// event received from the Bridge contract only stores
-	// resource ID of the token handler contract,
-	// destination chain ID and the deposit nonce.
-	chainID := fmt.Sprint(e.Event.Inputs[0].Value)
-	resourceID := fmt.Sprint(e.Event.Inputs[1].Value)
-	depositNonce := fmt.Sprint(e.Event.Inputs[2].Value)
-	// we need to use resourceID to find the token handler contract's address
+// GetDeposit retrieves a Deposit data based on metadata received from an event (ProposalEvent, Deposit)
+// involved a cross-chain transaction.
+func GetDeposit(bc *blockchain.Blockchain, destinationChainID int, resourceID string, depositNonce int64) (*Deposit, error) {
+	// retrieve token handler address from a given resourceID
 	handlerAddress, err := getHandlerAddress(resourceID, bc)
 	if err != nil {
-
 		return nil, err
 	}
-
 	// get the deposit data by calling depositRecords method of the handler contract
 	endpoint := fmt.Sprintf("http://%s/api/v0/chains/ethereum/addresses/%s/contracts/erc20handler/methods/_depositRecords",
 		bc.MbEndpoint, handlerAddress.String())
 	payload := mbAPI.JSONPOSTMethodArgs{
-		Args: []interface{}{chainID, depositNonce},
+		Args: []interface{}{destinationChainID, depositNonce},
 		TransactionArgs: blockchain.TransactionArgs{
 			From: &bc.HSMAddress,
 		},
@@ -128,9 +120,7 @@ func GetDeposit(e *blockchain.JSONEvent, bc *blockchain.Blockchain) (*Deposit, e
 
 	// parse DepositData from known variables
 	var d Deposit
-	if d.DepositNonce, err = strconv.ParseInt(depositNonce, 10, 64); err != nil {
-		return nil, err
-	}
+	d.DepositNonce = depositNonce
 	if err := json.Unmarshal(data.Ouput[0], &d.TokenAddress); err != nil {
 		return nil, err
 	}

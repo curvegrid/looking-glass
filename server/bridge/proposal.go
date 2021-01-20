@@ -12,6 +12,18 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+// Proposal is used to represent a proposal of a cross-chain deposit.
+// Proposal needs to be passed by relayers from the destination chain
+// to execute the transaction.
+type Proposal struct {
+	OriginChainID      int
+	DestinationChainID int
+	Status             int
+	DepositNonce       int64
+	ResourceID         string
+	DataHash           string
+}
+
 // getProposalDataHash returns the data hash used to call voteProposal method
 // of a Bridge contract.
 func getProposalDataHash(d *Deposit, handlerAddress *blockchain.Address) string {
