@@ -1,0 +1,37 @@
+{
+  "BlockchainMapping": {
+    "ChainIdToBlockchain": {
+      "0": {
+        "MbEndpoint": "localhost:8080",
+        "BearerToken": "",
+        "Confirmations": 1,
+        "BridgeAddress" : "0x4B4b9a685aF3b822D2b22B4960E3cD1a3FD33886",
+        "HSMAddress": "0xF9450D254A66ab06b30Cfa9c6e7AE1B7598c7172"
+      },
+      "1": {
+        "MbEndpoint": "localhost:8081",
+        "BearerToken": "",
+        "Confirmations": 1,
+        "BridgeAddress" : "0x5EE9304657B42c4453E6B1D1FfE96B74443cbC09",
+        "HSMAddress": "0xF9450D254A66ab06b30Cfa9c6e7AE1B7598c7172"
+      }
+    }
+  },
+  "ResourceMapping": {
+    "resourceIDToResource": {
+      "0x0000000000000000000000000000000000000000000000000000000000000001": [
+        {
+          "chainID": 0,
+          "tokenAddress": "0x97905BB519ca8f13f5a270E30AB5757364f20745",
+          "erc20HandlerAddress": "0x004C35b369b29a855A2d770a5702F0B0A1551Dc0"
+        },
+        {
+          "chainID": 1,
+          "tokenAddress": "0xE123aA7046C92E83D7B7Ba507c76a31C5E231b75",
+          "erc20HandlerAddress": "0xb3975b47b5396E129ab4c6eE40Ae8B04743C407F"
+        }
+      ]
+    }
+  },
+  "CorsDomains": []
+}
