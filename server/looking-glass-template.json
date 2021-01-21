@@ -27,8 +27,8 @@
         },
         {
           "chainID": 1,
-          "tokenAddress": "0x834eaa8aEfd22e3D609549Ef68D0D6E754615C23",
-          "erc20HandlerAddress": "0x4B4b9a685aF3b822D2b22B4960E3cD1a3FD33886"
+          "tokenAddress": "0xE123aA7046C92E83D7B7Ba507c76a31C5E231b75",
+          "erc20HandlerAddress": "0xb3975b47b5396E129ab4c6eE40Ae8B04743C407F"
         }
       ]
     }

@@ -2,15 +2,17 @@
   <div>
     <v-form ref="form">
       <v-container>
-        <v-text-field v-model="amount" label="Amount" />
-        <v-text-field v-model="recipient" label="Recipient" />
+        <v-text-field v-model="amount" placeholder="Amount" />
+        <v-text-field v-model="recipient" placeholder="Recipient" />
         <v-autocomplete
           v-model="originToken"
+          placeholder="Origin token"
           :items="tokens"
           :loading="isLoading"
         />
         <v-autocomplete
           v-model="destinationToken"
+          placeholder="Destination token"
           :items="tokens"
           :loading="isLoading"
         />
@@ -32,7 +34,7 @@ export default {
   data() {
     return {
       // form data
-      amount: 0,
+      amount: null,
       recipient: "",
       originToken: {},
       destinationToken: {},
