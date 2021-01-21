@@ -1,3 +1,5 @@
+// Copyright (c) 2021 Curvegrid Inc.
+
 package api
 
 import (
