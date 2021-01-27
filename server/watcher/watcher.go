@@ -227,7 +227,6 @@ func (w *Watcher) Watch() chan struct{} {
 					// we only handle the first event if "bc.Confirmations" blocks have been confirmed since the event
 					for len(events) > 0 && events[0].Transaction.BlockNumber+int64(bc.Confirmations) <= latestBlock {
 						e := events[0]
-						events = events[1:]
 						switch e.Event.Name {
 						case "Deposit":
 							if err := w.handleDepositEvent(&e); err != nil {
@@ -249,6 +248,9 @@ func (w *Watcher) Watch() chan struct{} {
 								}
 							}
 						}
+
+						// if the first event is successfully processed, remove it from the list
+						events = events[1:]
 					}
 
 				sleep:
