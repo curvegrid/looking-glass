@@ -221,7 +221,7 @@ func (w *Watcher) Watch() chan struct{} {
 					latestBlock, err := getLatestBlockNumber(bc)
 					if err != nil {
 						logger.Errorf("Cannot retrieve the latest block of chain %d: %s", w.ChainID, err.Error())
-						continue
+						goto sleep
 					}
 
 					// we only handle the first event if "bc.Confirmations" blocks have been confirmed since the event
@@ -232,22 +232,26 @@ func (w *Watcher) Watch() chan struct{} {
 						case "Deposit":
 							if err := w.handleDepositEvent(&e); err != nil {
 								logger.Errorf("Cannot handle event %s: %s", e.Event.Name, err.Error())
+								goto sleep
 							}
 						case "ProposalEvent":
 							{
 								if err := w.handleProposalEvent(&e); err != nil {
 									logger.Errorf("Cannot handle event %s: %s", e.Event.Name, err.Error())
+									goto sleep
 								}
 							}
 						case "ProposalVote":
 							{
 								if err := w.handleProposalVote(&e); err != nil {
 									logger.Errorf("Cannot handle event %s: %s", e.Event.Name, err.Error())
+									goto sleep
 								}
 							}
 						}
 					}
 
+				sleep:
 					time.Sleep(5 * time.Second)
 				}
 			}
