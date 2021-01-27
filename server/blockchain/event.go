@@ -56,3 +56,25 @@ type JSONEvent struct {
 	Event       *EventInformation       `json:"event"`
 	Transaction *TransactionInformation `json:"transaction"`
 }
+
+// Enum values for event_log_type
+const (
+	EventLogTypeCreate = "create"
+	EventLogTypeRemove = "remove"
+)
+
+// ReturnedEvent is an event struct sent through websocket.
+type ReturnedEvent struct {
+	LogID int    `json:"log_id,omitempty"`
+	Type  string `json:"type"` // "create" or "remove"
+	*JSONEvent
+}
+
+// IsEqual checks if two given events are the same event
+func (e *ReturnedEvent) IsEqual(other *ReturnedEvent) bool {
+	return e.Transaction.BlockNumber == other.Transaction.BlockNumber &&
+		e.Transaction.BlockHash == other.Transaction.BlockHash &&
+		e.Transaction.TXIndexInBlock == other.Transaction.TXIndexInBlock &&
+		e.Transaction.TXHash == other.Transaction.TXHash &&
+		e.Event.EventIndexInLog == other.Event.EventIndexInLog
+}
